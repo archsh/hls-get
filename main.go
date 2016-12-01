@@ -21,13 +21,12 @@ import (
 	"os"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/archsh/hlsutils/helpers/logging"
 	"github.com/BurntSushi/toml"
 )
 
 const VERSION = "0.9.15"
 
-var logging_config = logging.LoggingConfig{Format:logging.DEFAULT_FORMAT, Level:"INFO"}
+var logging_config = LoggingConfig{Format:DEFAULT_FORMAT, Level:"INFO"}
 
 type RedisConfig struct {
 	Host string
@@ -194,11 +193,11 @@ func main() {
 	}
 
 	if logging_config.Filename != "" {
-		logging.InitializeLogging(&logging_config, false, logging_config.Level)
+		InitializeLogging(&logging_config, false, logging_config.Level)
 	}else{
-		logging.InitializeLogging(&logging_config, true, logging_config.Level)
+		InitializeLogging(&logging_config, true, logging_config.Level)
 	}
-	defer logging.DeinitializeLogging()
+	defer DeinitializeLogging()
 	path_rewriter := NewPathRewriter(cfg.Path_Rewrite)
 	segment_rewriter := NewSegmentRewriter(cfg.Segment_Rewrite)
 	var dl_interface DL_Interface
