@@ -1,0 +1,6 @@
+.DS_Store
+src/github.com
+src/menteslibres.net
+bin/
+*.exe
+*.log
