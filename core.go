@@ -277,11 +277,11 @@ func (self *HLSGetter) GetPlaylist(urlStr string, outDir string, filename string
 				var msFilename string
 				var segname string
 				if strings.HasPrefix(v.URI, "http://") || strings.HasPrefix(v.URI, "https://") {
-					msURI, _ = url.QueryUnescape(v.URI)
+					msURI = v.URI
 					segname = fmt.Sprintf("%04d.ts", idx)
 				} else {
 					msUrl, _ := resp.Request.URL.Parse(v.URI)
-					msURI, _ = url.QueryUnescape(msUrl.String())
+					msURI = msUrl.String()
 					segname = v.URI
 				}
 				segname = self.SegmentRewrite(v.URI,idx)  //fmt.Sprintf("%04d.ts", idx)
