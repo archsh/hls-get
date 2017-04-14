@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	log "github.com/Sirupsen/logrus"
 	"net/http"
-	"net/url"
 	"os"
 	//"path"
 	//"regexp"
