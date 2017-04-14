@@ -24,7 +24,7 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-const VERSION = "0.9.15"
+const VERSION = "0.9.16"
 
 var logging_config = LoggingConfig{Format:DEFAULT_FORMAT, Level:"INFO"}
 
