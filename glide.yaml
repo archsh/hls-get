@@ -1,0 +1,12 @@
+package: hls-get
+import:
+- package: github.com/BurntSushi/toml
+  version: v0.3.0
+- package: github.com/Sirupsen/logrus
+  version: v1.0.3
+- package: github.com/archsh/m3u8
+  version: v0.9.1
+- package: github.com/go-sql-driver/mysql
+  version: v1.3
+- package: github.com/gosexy/redis
+- package: github.com/rwtodd/sed-go
