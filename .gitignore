@@ -2,5 +2,6 @@
 src/github.com
 src/menteslibres.net
 bin/
+vendor/
 *.exe
 *.log
