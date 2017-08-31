@@ -15,4 +15,4 @@ import:
 - package: github.com/go-sql-driver/mysql
   version: v1.3
 - package: github.com/gosexy/redis
-- package: github.com/rwtodd/sed-go
+- package: github.com/rwtodd/Go.Sed/sed

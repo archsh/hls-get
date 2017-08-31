@@ -1,7 +1,8 @@
 package main
 
 import (
-	"github.com/rwtodd/sed-go"
+	//"github.com/rwtodd/sed-go"
+	"github.com/rwtodd/Go.Sed/sed"
 	"strings"
 	"os"
 )
