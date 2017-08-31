@@ -5,3 +5,4 @@ bin/
 vendor/
 *.exe
 *.log
+glide.lock
