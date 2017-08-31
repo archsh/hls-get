@@ -1,5 +1,11 @@
 package: hls-get
 import:
+- package: golang.org/x/sys
+  vcs: git
+  repo: https://github.com/golang/sys.git
+- package: golang.org/x/crypto
+  vcs: git
+  repo: https://github.com/golang/crypto.git
 - package: github.com/BurntSushi/toml
   version: v0.3.0
 - package: github.com/Sirupsen/logrus
