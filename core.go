@@ -283,7 +283,7 @@ func (self *HLSGetter) GetPlaylist(urlStr string, outDir string, filename string
 					msURI = msUrl.String()
 					segname = v.URI
 				}
-				segname = self.SegmentRewrite(v.URI,idx)  //fmt.Sprintf("%04d.ts", idx)
+				//segname = self.SegmentRewrite(v.URI,idx)  //fmt.Sprintf("%04d.ts", idx)
 				msFilename = filepath.Join(filepath.Dir(playlistFilename), segname)
 				//mpl.Segments[idx].URI = segname
 				new_mpl.Append(segname, v.Duration, v.Title)
