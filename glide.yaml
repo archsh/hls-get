@@ -1,11 +1,11 @@
 package: hls-get
 import:
 - package: golang.org/x/sys
-  vcs: git
   repo: https://github.com/golang/sys.git
-- package: golang.org/x/crypto
   vcs: git
+- package: golang.org/x/crypto
   repo: https://github.com/golang/crypto.git
+  vcs: git
 - package: github.com/BurntSushi/toml
   version: v0.3.0
 - package: github.com/Sirupsen/logrus
@@ -15,4 +15,8 @@ import:
 - package: github.com/go-sql-driver/mysql
   version: v1.3
 - package: github.com/gosexy/redis
-- package: github.com/rwtodd/Go.Sed/sed
+- package: github.com/rwtodd/Go.Sed
+  subpackages:
+  - sed
+- package: github.com/boltdb/bolt
+  version: ^1.3.1
