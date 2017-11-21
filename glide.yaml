@@ -10,7 +10,7 @@ import:
   version: v0.3.0
 - package: github.com/Sirupsen/logrus
   version: v1.0.3
-- package: github.com/archsh/m3u8
+- package: github.com/archsh/go.m3u8
   version: v0.9.1
 - package: github.com/go-sql-driver/mysql
   version: v1.3
