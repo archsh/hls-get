@@ -67,9 +67,9 @@ type Configuration struct {
 func Usage() {
     guide := `
 Scenarios:
-  (1) Simple mode: download one or multiple URL without DB support.
+  (1) Simple mode: download one or multiple URL without Database support.
   (2) Redis support: download multiple URL via REDIS LIST.
-  (3) MySQL support: download multiple URL via MySQL DB Table.
+  (3) MySQL support: download multiple URL via MySQL Database Table.
 
 Usage:
   hls-get [OPTIONS,...] [URL1,URL2,...]
