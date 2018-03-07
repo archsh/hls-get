@@ -6,3 +6,4 @@ vendor/
 *.exe
 *.log
 glide.lock
+version.go

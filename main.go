@@ -15,7 +15,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 package main
-
+//go:generate sh ./gen_version.sh version.go
 import (
     "flag"
     "os"
@@ -24,7 +24,6 @@ import (
     "github.com/BurntSushi/toml"
 )
 
-const VERSION = "0.9.16"
 
 var logging_config = LoggingConfig{Format: DEFAULT_FORMAT, Level: "INFO"}
 
@@ -105,7 +104,7 @@ func main() {
     //SR 'segment_rewrite'     - [STRING] Rewrite segment name method. Default empty means simple copy.
     flag.StringVar(&cfg.Segment_Rewrite, "SR", "", "Rewrite segment name method. Empty means simple copy.")
     //UA 'user_agent'    - [STRING] UserAgent. Default is 'hls-get' with version num.
-    flag.StringVar(&cfg.User_Agent, "UA", "hls-get v"+VERSION, "UserAgent.")
+    flag.StringVar(&cfg.User_Agent, "UA", "hls-get "+VERSION+"("+TAG+")", "UserAgent.")
     //L  'log'   - [STRING] Logging output file. Default 'stdout'.
     flag.StringVar(&cfg.Log_File, "L", "", "Logging output file. Default 'stdout'.")
     //V 'loglevel' - [STRING] Log level. Default 'INFO'.
@@ -154,11 +153,11 @@ func main() {
     flag.Parse()
 
     if showVersion {
-        os.Stderr.Write([]byte(fmt.Sprintf("hls-get v%v\n", VERSION)))
+        os.Stderr.Write([]byte(fmt.Sprintf("hls-get %v (%s), Built @ %s \n", VERSION,TAG, BUILD_TIME)))
         os.Exit(0)
     }
 
-    os.Stderr.Write([]byte(fmt.Sprintf("hls-get v%v - HTTP Live Streaming (HLS) Downloader.\n", VERSION)))
+    os.Stderr.Write([]byte(fmt.Sprintf("hls-get %v (%s) - HTTP Live Streaming (HLS) Downloader.\n", VERSION,TAG)))
     os.Stderr.Write([]byte("Copyright (C) 2015 Mingcai SHEN <archsh@gmail.com>. Licensed for use under the GNU GPL version 3.\n"))
     if mysql_show_schema {
         ShowMySQLSchema()
@@ -174,7 +173,7 @@ func main() {
         }
     }
     if cfg.User_Agent != "" {
-        cfg.User_Agent = "hls-get v" + VERSION
+        cfg.User_Agent = "hls-get " + VERSION + "("+TAG+")"
     }
     if cfg.Retries < 1 {
         cfg.Retries = 1
