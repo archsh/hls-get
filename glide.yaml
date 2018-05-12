@@ -6,6 +6,9 @@ import:
 - package: golang.org/x/crypto
   repo: https://github.com/golang/crypto.git
   vcs: git
+- package: menteslibres.net/gosexy/to
+  repo: https://github.com/gosexy/to.git
+  vcs: git
 - package: github.com/BurntSushi/toml
   version: v0.3.0
 - package: github.com/Sirupsen/logrus
