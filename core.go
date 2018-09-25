@@ -286,7 +286,22 @@ func (self *HLSGetter) GetPlaylist(urlStr string, outDir string, filename string
                 //segname = self.SegmentRewrite(v.URI,idx)  //fmt.Sprintf("%04d.ts", idx)
                 msFilename = filepath.Join(filepath.Dir(playlistFilename), segname)
                 //mpl.Segments[idx].URI = segname
-                new_mpl.Append(segname, v.Duration, v.Title)
+                newseg := m3u8.MediaSegment{
+                    SeqId:           v.SeqId,
+                    Title:           v.Title,
+                    URI:             segname,
+                    Duration:        v.Duration,
+                    Limit:           v.Limit,
+                    Offset:          v.Offset,
+                    Key:             v.Key,
+                    Map:             v.Map,
+                    Discontinuity:   v.Discontinuity,
+                    SCTE:            v.SCTE,
+                    ProgramDateTime: v.ProgramDateTime,
+                }
+                //mpl.Segments[idx].URI = segname
+                //new_mpl.Append(segname, v.Duration, v.Title)
+                new_mpl.AppendSegment(&newseg)
                 segments = append(segments, &Download{msURI, msFilename, urlStr, uint(segs), uint(idx + 1), 0})
             }
             log.Debugln("GetPlaylist> Writing playlist to ", playlistFilename, "...")
