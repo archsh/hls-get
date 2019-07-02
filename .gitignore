@@ -7,3 +7,4 @@ vendor/
 *.log
 glide.lock
 version.go
+go.sum
