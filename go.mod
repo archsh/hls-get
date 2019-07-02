@@ -7,8 +7,8 @@ require (
 	github.com/Sirupsen/logrus v1.0.3
 	github.com/archsh/go.m3u8 v0.9.1
 	github.com/boltdb/bolt v1.3.1
+	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-sql-driver/mysql v1.3.0
-	github.com/gosexy/redis v0.0.0-20150603022529-19c427d2a3bc
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/rwtodd/Go.Sed v0.0.0-20170507045331-d6d5d585814e
