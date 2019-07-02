@@ -8,3 +8,4 @@ vendor/
 glide.lock
 version.go
 go.sum
+.idea/
