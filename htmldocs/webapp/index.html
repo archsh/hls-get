@@ -134,7 +134,8 @@
                 urlRules: [
                     v => !!v || '必须输入下载地址',
                     v => /http.+/.test(v) || '无效的下载地址'
-                ]
+                ],
+                tasks:[]
             }
         },
         methods: {
@@ -152,10 +153,17 @@
                     this.snackbar = true
                 } else {
                     axios.post('/download', this.form).then(res => {
-                        this.snackColor = "success"
-                        this.snackMsg = '成功！'
-                        this.snackbar = true
-                        this.dialog = false
+                        if(res.data.code!==0){
+                            this.snackColor = "error"
+                            this.snackMsg = '失败:' + res.data.msg
+                            this.snackbar = true
+                        } else {
+                            this.snackColor = "success"
+                            this.snackMsg = '成功！'
+                            this.snackbar = true
+                            this.dialog = false
+                            this.tasks.push(res.data)
+                        }
                     }).catch(e => {
                         this.snackColor = "error"
                         this.snackMsg = '失败:' + e
