@@ -9,3 +9,4 @@ glide.lock
 version.go
 go.sum
 .idea/
+htmldocs/assets_vfsdata.go
