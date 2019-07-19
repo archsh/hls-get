@@ -2,14 +2,15 @@ package main
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/archsh/go.m3u8"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"errors"
-	"fmt"
+	"path"
 	"path/filepath"
 	//"path"
 	//"regexp"
@@ -121,7 +122,7 @@ func (self *HLSGetter) Run(loop bool) {
 		for _, l := range urls {
 			log.Debugln(" Downloading ", l, "...")
 			go func(lk string) {
-				self.Download(lk, self._output, "", func(url string, dest string, ret_code int, ret_msg string) {
+				self.Download(lk, self._output, path.Base(lk), func(url string, dest string, ret_code int, ret_msg string) {
 					if ret_code == 0 {
 						totalSuccess += 1
 					} else {
@@ -283,7 +284,7 @@ func (self *HLSGetter) GetPlaylist(urlStr string, outDir string, filename string
 					msURI = msUrl.String()
 					segname = v.URI
 				}
-				segname = self.SegmentRewrite(v.URI,idx)  //fmt.Sprintf("%04d.ts", idx)
+				segname = self.SegmentRewrite(v.URI, idx) //fmt.Sprintf("%04d.ts", idx)
 				msFilename = filepath.Join(filepath.Dir(playlistFilename), segname)
 				//mpl.Segments[idx].URI = segname
 				newseg := m3u8.MediaSegment{
