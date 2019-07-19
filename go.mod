@@ -17,7 +17,7 @@ require (
 	github.com/rwtodd/Go.Sed v0.0.0-20170507045331-d6d5d585814e
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
-	github.com/sirupsen/logrus v1.4.2 // indirect
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
 	github.com/xiam/resp v0.0.0-20150723032330-04b037c5d609 // indirect
