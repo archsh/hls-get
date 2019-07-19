@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"path"
+
 	//"github.com/rwtodd/sed-go"
 	"github.com/rwtodd/Go.Sed/sed"
 	"os"
@@ -25,7 +27,7 @@ func (self *PathRewriter) RunString(input string, n int) string {
 			return strings.TrimSpace(s)
 		}
 	} else {
-		return input
+		return path.Base(input)
 	}
 }
 
