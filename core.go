@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	//"path"
 	//"regexp"
@@ -122,7 +121,7 @@ func (self *HLSGetter) Run(loop bool) {
 		for _, l := range urls {
 			log.Debugln(" Downloading ", l, "...")
 			go func(lk string) {
-				self.Download(lk, self._output, path.Base(lk), func(url string, dest string, ret_code int, ret_msg string) {
+				self.Download(lk, self._output, "", func(url string, dest string, ret_code int, ret_msg string) {
 					if ret_code == 0 {
 						totalSuccess += 1
 					} else {
