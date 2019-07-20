@@ -34,6 +34,18 @@
                     >
                       <v-icon>add</v-icon>
                     </v-btn>
+                    <v-btn
+                      color="blue"
+                      dark
+                      small
+                      absolute
+                      top
+                      left
+                      fab
+                      @click="getTasks"
+                    >
+                      <v-icon>autorenew</v-icon>
+                    </v-btn>
                     <v-data-table
                       :headers="headers"
                       :items="tasks"
