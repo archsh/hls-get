@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
@@ -25,35 +26,34 @@ var (
 	ffmpeg       string
 	timeout      int
 	concurrent   int
-	downloadChan chan *downloadReq
+	downloadChan chan *downloadRequest
+	cache        map[string]*downloadResult
+	cacheMutex   sync.Mutex
 )
 
-type downloadReq struct {
+type downloadRequest struct {
 	id   string
 	Name string `json:"name"`
-	Url  string `json:"url"`
+	URL  string `json:"url"`
 }
 
-type downloadResp struct {
-	Code    int    `json:"code"`
-	Id      string `json:"id"`
-	Status  int    `json:"status"`
-	Message string `json:"msg"`
+type downloadResult struct {
+	Code     int    `json:"code"`
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Status   int    `json:"status"`
+	Progress int    `json:"progress"`
+	Message  string `json:"msg"`
+	_url     string
 }
 
-func writeResponse(w http.ResponseWriter, code int, id string, status int, message string) {
-	var resp = downloadResp{
-		Code:    code,
-		Id:      id,
-		Status:  status,
-		Message: message,
-	}
-	if bs, e := json.Marshal(resp); nil != e {
+func writeResponse(w http.ResponseWriter, status int, data interface{}) {
+	if bs, e := json.Marshal(data); nil != e {
 		w.WriteHeader(500)
 		w.Header().Set("Content-Type", "plain/text")
-		_, _ = w.Write([]byte("OK"))
+		_, _ = w.Write([]byte(e.Error()))
 	} else {
-		w.WriteHeader(200)
+		w.WriteHeader(status)
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(bs)
 	}
@@ -65,9 +65,45 @@ func md5sum(s string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+func getDownload(id string) (*downloadResult, bool) {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+	r, b := cache[id]
+	return r, b
+}
+
+func getAllDownloads() []*downloadResult {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+	var results []*downloadResult
+	for _, v := range cache {
+		results = append(results, v)
+	}
+	return results
+}
+
+func setDownload(ret *downloadResult) {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+	cache[ret.ID] = ret
+}
+
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	if id != "" {
+		if v, b := getDownload(id); b {
+			writeResponse(w, 200, v)
+		} else {
+			writeResponse(w, 404, nil)
+		}
+	} else {
+		writeResponse(w, 200, getAllDownloads())
+	}
+}
+
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("downloadHandler:>")
-	var req downloadReq
+	var req downloadRequest
 	if bs, e := ioutil.ReadAll(r.Body); nil != e {
 		http.Error(w, "invalid data:"+e.Error(), 400)
 		return
@@ -77,17 +113,31 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	} else if req.Name == "" {
 		http.Error(w, "invalid data: empty name", 400)
 		return
-	} else if req.Url == "" {
+	} else if req.URL == "" {
 		http.Error(w, "invalid data: empty url", 400)
 		return
 	} else {
-		log.Debugln("downloadHandler:>", req.Name, req.Url)
-		req.id = md5sum(req.Url)
+		log.Debugln("downloadHandler:>", req.Name, req.URL)
+		req.id = md5sum(req.URL)
 		if len(downloadChan) >= concurrent {
-			writeResponse(w, -1, "", -1, "Tasks full, please wait...")
+			var resp = downloadResult{
+				Code:    -1,
+				ID:      "",
+				Name:    req.Name,
+				Status:  -1,
+				Message: "Tasks full, please wait...",
+			}
+			writeResponse(w, 200, resp)
 		} else {
 			downloadChan <- &req
-			writeResponse(w, 0, req.id, 0, "")
+			var resp = downloadResult{
+				Code:    0,
+				ID:      req.id,
+				Name:    req.Name,
+				Status:  0,
+				Message: "",
+			}
+			writeResponse(w, 200, resp)
 		}
 
 	}
@@ -96,11 +146,22 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 func downloadTask() {
 	log.Infoln("downloadTask:> started")
 	for t := range downloadChan {
-		log.Debugln("downloadTask:>", t.id, t.Name, t.Url)
+		log.Debugln("downloadTask:>", t.id, t.Name, t.URL)
 		go func() {
-			log.Debugln(">>>> Downloading:", t.id, t.Url)
+			log.Debugln(">>>> Downloading:", t.id, t.URL)
+			var ret = downloadResult{
+				ID:       t.id,
+				Name:     t.Name,
+				Status:   0,
+				Progress: 0,
+				Message:  "",
+				_url:     t.URL,
+			}
+			setDownload(&ret)
 			time.Sleep(30 * time.Second)
-			log.Debugln(">>>> Downloaded:", t.id, t.Url)
+			ret.Status = 1
+			setDownload(&ret)
+			log.Debugln(">>>> Downloaded:", t.id, t.URL)
 		}()
 	}
 }
@@ -117,13 +178,16 @@ var serveCmd = &cobra.Command{
 		//	http.Redirect(w, r, "/admin/", 302)
 		//})
 		router.HandleFunc("/download", downloadHandler)
+		router.HandleFunc("/status/", statusHandler)
+		router.HandleFunc("/status/{id}", statusHandler)
 		router.PathPrefix("/").Handler(
 			handlers.CombinedLoggingHandler(os.Stdout, http.StripPrefix("/", http.FileServer(htmldocs.Assets))))
 		log.Infoln("Start to serve @", listen, "...")
 		if concurrent < 1 {
 			concurrent = 5
 		}
-		downloadChan = make(chan *downloadReq, concurrent)
+		downloadChan = make(chan *downloadRequest, concurrent)
+		cache = make(map[string]*downloadResult)
 		go downloadTask()
 		if e := http.ListenAndServe(listen, handlers.CombinedLoggingHandler(os.Stdout, router)); nil != e {
 			fmt.Println("Serve failed:>", e)
