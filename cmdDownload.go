@@ -2,9 +2,10 @@ package main
 
 import (
 	"flag"
+	"os"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 var logging_config = LoggingConfig{Format: DEFAULT_FORMAT, Level: "INFO"}
@@ -65,57 +66,59 @@ var (
 	downloadCfg Configuration
 )
 
+func downloadFunc(cmd *cobra.Command, args []string) {
+	if downloadCfg.UserAgent != "" {
+		downloadCfg.UserAgent = "hls-get " + VERSION + "(" + TAG + ")"
+	}
+	if downloadCfg.Retries < 1 {
+		downloadCfg.Retries = 1
+	}
+	if downloadCfg.Concurrent < 1 {
+		downloadCfg.Concurrent = 5
+	}
+	if downloadCfg.SkipOnSize {
+		downloadCfg.Skip = downloadCfg.SkipOnSize
+	}
+
+	if logging_config.Filename != "" {
+		InitializeLogging(&logging_config, false, logging_config.Level)
+	} else {
+		InitializeLogging(&logging_config, true, logging_config.Level)
+	}
+	defer DeinitializeLogging()
+	pathRewriter := NewPathRewriter(downloadCfg.PathRewrite)
+	segmentRewriter := NewSegmentRewriter(downloadCfg.SegmentRewrite)
+	var dlInterface DL_Interface
+	var loop bool
+	if downloadCfg.Mode == "mysql" {
+		// Fetch list from MySQL.
+		log.Infoln("Using mysql as task dispatcher...")
+		dlInterface = NewMySQLDl(downloadCfg.MySQL.Host, uint(downloadCfg.MySQL.Port), downloadCfg.MySQL.Db, downloadCfg.MySQL.Table, downloadCfg.MySQL.Username, downloadCfg.MySQL.Password)
+		loop = true
+	} else if downloadCfg.Mode == "redis" {
+		// Fetch list from Redis.
+		log.Infoln("Using redis as task dispatcher...")
+		dlInterface = NewRedisDl(downloadCfg.Redis.Host, uint(downloadCfg.Redis.Port), downloadCfg.Redis.Password, downloadCfg.Redis.Db, downloadCfg.Redis.Key)
+		loop = true
+	} else if len(args) > 0 {
+		// Fetch list from Args.
+		log.Infoln("Using download list from arguments ...")
+		dlInterface = NewDummyDl(args)
+	} else {
+		Usage()
+		_, _ = os.Stderr.Write([]byte("\n"))
+		return
+	}
+	hlsgetter := NewHLSGetter(dlInterface, downloadCfg.Output, pathRewriter, segmentRewriter, downloadCfg.Retries,
+		downloadCfg.Timeout, downloadCfg.Skip, downloadCfg.SkipOnSize, downloadCfg.Redirect, downloadCfg.Concurrent, downloadCfg.Total)
+	hlsgetter.SetUA(downloadCfg.UserAgent)
+	hlsgetter.Run(loop)
+}
+
 var downloadCmd = &cobra.Command{
 	Use:   "download",
 	Short: "Download via Command line",
-	Run: func(cmd *cobra.Command, args []string) {
-		if downloadCfg.UserAgent != "" {
-			downloadCfg.UserAgent = "hls-get " + VERSION + "(" + TAG + ")"
-		}
-		if downloadCfg.Retries < 1 {
-			downloadCfg.Retries = 1
-		}
-		if downloadCfg.Concurrent < 1 {
-			downloadCfg.Concurrent = 5
-		}
-		if downloadCfg.SkipOnSize {
-			downloadCfg.Skip = downloadCfg.SkipOnSize
-		}
-
-		if logging_config.Filename != "" {
-			InitializeLogging(&logging_config, false, logging_config.Level)
-		} else {
-			InitializeLogging(&logging_config, true, logging_config.Level)
-		}
-		defer DeinitializeLogging()
-		pathRewriter := NewPathRewriter(downloadCfg.PathRewrite)
-		segmentRewriter := NewSegmentRewriter(downloadCfg.SegmentRewrite)
-		var dlInterface DL_Interface
-		var loop bool
-		if downloadCfg.Mode == "mysql" {
-			// Fetch list from MySQL.
-			log.Infoln("Using mysql as task dispatcher...")
-			dlInterface = NewMySQLDl(downloadCfg.MySQL.Host, uint(downloadCfg.MySQL.Port), downloadCfg.MySQL.Db, downloadCfg.MySQL.Table, downloadCfg.MySQL.Username, downloadCfg.MySQL.Password)
-			loop = true
-		} else if downloadCfg.Mode == "redis" {
-			// Fetch list from Redis.
-			log.Infoln("Using redis as task dispatcher...")
-			dlInterface = NewRedisDl(downloadCfg.Redis.Host, uint(downloadCfg.Redis.Port), downloadCfg.Redis.Password, downloadCfg.Redis.Db, downloadCfg.Redis.Key)
-			loop = true
-		} else if len(args) > 0 {
-			// Fetch list from Args.
-			log.Infoln("Using download list from arguments ...")
-			dlInterface = NewDummyDl(args)
-		} else {
-			Usage()
-			_, _ = os.Stderr.Write([]byte("\n"))
-			return
-		}
-		hlsgetter := NewHLSGetter(dlInterface, downloadCfg.Output, pathRewriter, segmentRewriter, downloadCfg.Retries,
-			downloadCfg.Timeout, downloadCfg.Skip, downloadCfg.SkipOnSize, downloadCfg.Redirect, downloadCfg.Concurrent, downloadCfg.Total)
-		hlsgetter.SetUA(downloadCfg.UserAgent)
-		hlsgetter.Run(loop)
-	},
+	Run:   downloadFunc,
 }
 
 func init() {
