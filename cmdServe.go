@@ -9,8 +9,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
+	"path"
 	"sync"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"
@@ -24,6 +25,7 @@ var (
 	root         string
 	combine      bool
 	ffmpeg       string
+	format       string
 	timeout      int
 	concurrent   int
 	downloadChan chan *downloadRequest
@@ -145,6 +147,7 @@ func downloadHandler(w http.ResponseWriter, r *http.Request) {
 
 func downloadTask() {
 	log.Infoln("downloadTask:> started")
+	hlsgetter := NewHLSGetter(nil, root, nil, NewSegmentRewriter("%04d.ts"), 5, timeout, true, true, "", 5, 0)
 	for t := range downloadChan {
 		log.Debugln("downloadTask:>", t.id, t.Name, t.URL)
 		go func() {
@@ -157,10 +160,40 @@ func downloadTask() {
 				Message:  "",
 				_url:     t.URL,
 			}
-			setDownload(&ret)
-			time.Sleep(30 * time.Second)
+			// setDownload(&ret)
+			// time.Sleep(30 * time.Second)
 			ret.Status = 1
 			setDownload(&ret)
+			var dir string
+			var index string
+			var mp4 string
+			if combine {
+				dir = path.Join(root, ".tmp", t.id)
+				mp4 = path.Join(root, t.Name+"."+format)
+			} else {
+				dir = path.Join(root, t.Name)
+			}
+			index = path.Join(dir, "index.m3u8")
+			hlsgetter.Download(t.URL, dir, "index.m3u8", func(url string, dest string, ret_code int, ret_msg string) {
+				if ret_code != 0 {
+					ret.Status = -1
+					ret.Message = ret_msg
+				} else {
+					ret.Status = 2
+				}
+				setDownload(&ret)
+			})
+			if combine && mp4 != "" && ffmpeg != "" {
+				cmd := exec.Command(ffmpeg, "-i", index, "-c", "copy", mp4)
+				if e := cmd.Run(); nil != e {
+					log.Errorln("Run command failed:", e)
+					ret.Status = -1
+					ret.Message = e.Error()
+				} else {
+					ret.Status = 3
+				}
+				setDownload(&ret)
+			}
 			log.Debugln(">>>> Downloaded:", t.id, t.URL)
 		}()
 	}
@@ -200,7 +233,8 @@ func init() {
 	serveCmd.Flags().StringVar(&listen, "listen", ":8080", "HTTP Listen Address")
 	serveCmd.Flags().StringVar(&root, "root", "", "Root directory to save files")
 	serveCmd.Flags().StringVar(&ffmpeg, "ffmpeg", "ffmpeg", "FFMPEG executable path")
-	serveCmd.Flags().BoolVar(&combine, "combine", false, "Combine segments into MP4 file")
+	serveCmd.Flags().BoolVar(&combine, "combine", false, "Combine segments into MP4/TS file")
+	serveCmd.Flags().StringVar(&format, "format", "ts", "Combine file format")
 	serveCmd.Flags().IntVar(&timeout, "timeout", 20, "Request timeout in seconds.")
 	serveCmd.Flags().IntVar(&concurrent, "concurrent", 5, "Concurrent download tasks")
 }
