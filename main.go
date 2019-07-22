@@ -51,57 +51,6 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	rootCmd.Flags().StringVar(&downloadCfg.Output, "O", ".", "Output directory.")
-	//PR 'path_rewrite'    - [STRING] Rewrite output path method. Default empty means simple copy.
-	rootCmd.Flags().StringVar(&downloadCfg.PathRewrite, "PR", "", "Rewrite output path method. Empty means simple copy.")
-	//SR 'segment_rewrite'     - [STRING] Rewrite segment name method. Default empty means simple copy.
-	rootCmd.Flags().StringVar(&downloadCfg.SegmentRewrite, "SR", "", "Rewrite segment name method. Empty means simple copy.")
-	//UA 'user_agent'    - [STRING] UserAgent. Default is 'hls-get' with version num.
-	rootCmd.Flags().StringVar(&downloadCfg.UserAgent, "UA", "hls-get "+VERSION+"("+TAG+")", "UserAgent.")
-	//L  'log'   - [STRING] Logging output file. Default 'stdout'.
-	rootCmd.Flags().StringVar(&downloadCfg.LogFile, "L", "", "Logging output file. Default 'stdout'.")
-	//V 'loglevel' - [STRING] Log level. Default 'INFO'.
-	rootCmd.Flags().StringVar(&downloadCfg.LogLevel, "V", "INFO", "Logging level. Default 'INFO'.")
-	//R  'retry' - [INTEGER] Retry times if download fails.
-	rootCmd.Flags().IntVar(&downloadCfg.Retries, "R", 0, "Retry times if download fails.")
-	//S  'skip'  - [BOOL] Skip if exists.
-	rootCmd.Flags().BoolVar(&downloadCfg.Skip, "S", false, "Skip if exists.")
-	//SZ 'skip_on_size' - [BOOL] Skip if size different.
-	rootCmd.Flags().BoolVar(&downloadCfg.SkipOnSize, "SZ", false, "Skip if size different.")
-	//M  'mode'  - [STRING] Source mode: redis, mysql. Default empty means source via command args.
-	rootCmd.Flags().StringVar(&downloadCfg.Mode, "M", "", "Source mode: redis, mysql. Empty means source via command args.")
-	//RD 'redirect'   - [STRING] Redirect server request.
-	rootCmd.Flags().StringVar(&downloadCfg.Redirect, "RR", "", "Redirect server request.")
-	//C  'concurrent' - [INTEGER] Concurrent tasks.
-	rootCmd.Flags().IntVar(&downloadCfg.Concurrent, "CO", 5, "Concurrent tasks.")
-	//TO 'timeout'    - [INTEGER] Request timeout in seconds.
-	rootCmd.Flags().IntVar(&downloadCfg.Timeout, "TO", 20, "Request timeout in seconds.")
-	//TT 'total'      - [INTEGER] Total download links.
-	rootCmd.Flags().Int64Var(&downloadCfg.Total, "TT", 0, "Total download links.")
-	///// Redis Configurations =========================================================================================
-	//RH 'redis_host'  - [STRING] Redis host.
-	rootCmd.Flags().StringVar(&downloadCfg.Redis.Host, "RH", "localhost", "Redis host.")
-	//RP 'redis_port'  - [INTEGER] Redis port.
-	rootCmd.Flags().IntVar(&downloadCfg.Redis.Port, "RP", 6379, "Redis port.")
-	//RD 'redis_db'    - [INTEGER] Redis db num.
-	rootCmd.Flags().IntVar(&downloadCfg.Redis.Db, "RD", 0, "Redis db num.")
-	//RW 'redis_password'  - [STRING] Redis password.
-	rootCmd.Flags().StringVar(&downloadCfg.Redis.Password, "RW", "", "Redis password.")
-	//RK 'redis_key'   - [STRING] List key name in redis.
-	rootCmd.Flags().StringVar(&downloadCfg.Redis.Key, "RK", "HLSGET_DOWNLOADS", "List key name in redis.")
-	///// MySQL Configurations =========================================================================================
-	//MH 'mysql_host'  - [STRING] MySQL host.
-	rootCmd.Flags().StringVar(&downloadCfg.MySQL.Host, "MH", "localhost", "MySQL host.")
-	//MP 'mysql_port'  - [INTEGER] MySQL port.
-	rootCmd.Flags().IntVar(&downloadCfg.MySQL.Port, "MP", 3306, "MySQL port.")
-	//MN 'mysql_username' - [STRING] MySQL username.
-	rootCmd.Flags().StringVar(&downloadCfg.MySQL.Username, "MN", "root", "MySQL username.")
-	//MW 'mysql_password' - [STRING] MySQL password.
-	rootCmd.Flags().StringVar(&downloadCfg.MySQL.Password, "MW", "", "MySQL password.")
-	//MD 'mysql_db'       - [STRING] MySQL database.
-	rootCmd.Flags().StringVar(&downloadCfg.MySQL.Db, "MD", "hlsgetdb", "MySQL database.")
-	//MT 'mysql_table'    - [STRING] MySQL table.
-	rootCmd.Flags().StringVar(&downloadCfg.MySQL.Table, "MT", "hlsget_downloads", "MySQL table.")
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -112,6 +61,7 @@ func init() {
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.AddCommand(downloadCmd, serveCmd, checkCmd, schemaCmd, versionCmd)
+	rootCmd.Flags().AddFlagSet(&flagSet)
 }
 
 // initConfig reads in config file and ENV variables if set.

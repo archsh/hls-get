@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"github.com/spf13/pflag"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
@@ -120,57 +121,60 @@ var downloadCmd = &cobra.Command{
 	Short: "Download via Command line",
 	Run:   downloadFunc,
 }
+var flagSet  pflag.FlagSet
 
 func init() {
-	downloadCmd.Flags().StringVar(&downloadCfg.Output, "O", ".", "Output directory.")
+	flagSet.StringVar(&downloadCfg.Output, "output", ".", "Output directory.")
 	//PR 'path_rewrite'    - [STRING] Rewrite output path method. Default empty means simple copy.
-	downloadCmd.Flags().StringVar(&downloadCfg.PathRewrite, "PR", "", "Rewrite output path method. Empty means simple copy.")
+	flagSet.StringVar(&downloadCfg.PathRewrite, "path_rewrite", "", "Rewrite output path method. Empty means simple copy.")
 	//SR 'segment_rewrite'     - [STRING] Rewrite segment name method. Default empty means simple copy.
-	downloadCmd.Flags().StringVar(&downloadCfg.SegmentRewrite, "SR", "", "Rewrite segment name method. Empty means simple copy.")
+	flagSet.StringVar(&downloadCfg.SegmentRewrite, "segment_rewrite", "", "Rewrite segment name method. Empty means simple copy.")
 	//UA 'user_agent'    - [STRING] UserAgent. Default is 'hls-get' with version num.
-	downloadCmd.Flags().StringVar(&downloadCfg.UserAgent, "UA", "hls-get "+VERSION+"("+TAG+")", "UserAgent.")
+	flagSet.StringVar(&downloadCfg.UserAgent, "user_agent", "hls-get "+VERSION+"("+TAG+")", "UserAgent.")
 	//L  'log'   - [STRING] Logging output file. Default 'stdout'.
-	downloadCmd.Flags().StringVar(&downloadCfg.LogFile, "L", "", "Logging output file. Default 'stdout'.")
+	flagSet.StringVar(&downloadCfg.LogFile, "log_file", "", "Logging output file. Default 'stdout'.")
 	//V 'loglevel' - [STRING] Log level. Default 'INFO'.
-	downloadCmd.Flags().StringVar(&downloadCfg.LogLevel, "V", "INFO", "Logging level. Default 'INFO'.")
+	flagSet.StringVar(&downloadCfg.LogLevel, "log_level", "INFO", "Logging level. Default 'INFO'.")
 	//R  'retry' - [INTEGER] Retry times if download fails.
-	downloadCmd.Flags().IntVar(&downloadCfg.Retries, "R", 0, "Retry times if download fails.")
+	flagSet.IntVar(&downloadCfg.Retries, "retries", 0, "Retry times if download fails.")
 	//S  'skip'  - [BOOL] Skip if exists.
-	downloadCmd.Flags().BoolVar(&downloadCfg.Skip, "S", false, "Skip if exists.")
+	flagSet.BoolVar(&downloadCfg.Skip, "skip_exists", false, "Skip if exists.")
 	//SZ 'skip_on_size' - [BOOL] Skip if size different.
-	downloadCmd.Flags().BoolVar(&downloadCfg.SkipOnSize, "SZ", false, "Skip if size different.")
+	flagSet.BoolVar(&downloadCfg.SkipOnSize, "skip_on_size", false, "Skip if size different.")
 	//M  'mode'  - [STRING] Source mode: redis, mysql. Default empty means source via command args.
-	downloadCmd.Flags().StringVar(&downloadCfg.Mode, "M", "", "Source mode: redis, mysql. Empty means source via command args.")
+	flagSet.StringVar(&downloadCfg.Mode, "mode", "", "Source mode: redis, mysql. Empty means source via command args.")
 	//RD 'redirect'   - [STRING] Redirect server request.
-	downloadCmd.Flags().StringVar(&downloadCfg.Redirect, "RR", "", "Redirect server request.")
+	flagSet.StringVar(&downloadCfg.Redirect, "redirect", "", "Redirect server request.")
 	//C  'concurrent' - [INTEGER] Concurrent tasks.
-	downloadCmd.Flags().IntVar(&downloadCfg.Concurrent, "CO", 5, "Concurrent tasks.")
+	flagSet.IntVar(&downloadCfg.Concurrent, "concurrent", 5, "Concurrent tasks.")
 	//TO 'timeout'    - [INTEGER] Request timeout in seconds.
-	downloadCmd.Flags().IntVar(&downloadCfg.Timeout, "TO", 20, "Request timeout in seconds.")
+	flagSet.IntVar(&downloadCfg.Timeout, "timeout", 20, "Request timeout in seconds.")
 	//TT 'total'      - [INTEGER] Total download links.
-	downloadCmd.Flags().Int64Var(&downloadCfg.Total, "TT", 0, "Total download links.")
+	flagSet.Int64Var(&downloadCfg.Total, "total", 0, "Total download links.")
 	///// Redis Configurations =========================================================================================
 	//RH 'redis_host'  - [STRING] Redis host.
-	downloadCmd.Flags().StringVar(&downloadCfg.Redis.Host, "RH", "localhost", "Redis host.")
+	flagSet.StringVar(&downloadCfg.Redis.Host, "redis_host", "localhost", "Redis host.")
 	//RP 'redis_port'  - [INTEGER] Redis port.
-	downloadCmd.Flags().IntVar(&downloadCfg.Redis.Port, "RP", 6379, "Redis port.")
+	flagSet.IntVar(&downloadCfg.Redis.Port, "redis_port", 6379, "Redis port.")
 	//RD 'redis_db'    - [INTEGER] Redis db num.
-	downloadCmd.Flags().IntVar(&downloadCfg.Redis.Db, "RD", 0, "Redis db num.")
+	flagSet.IntVar(&downloadCfg.Redis.Db, "redis_db", 0, "Redis db num.")
 	//RW 'redis_password'  - [STRING] Redis password.
-	downloadCmd.Flags().StringVar(&downloadCfg.Redis.Password, "RW", "", "Redis password.")
+	flagSet.StringVar(&downloadCfg.Redis.Password, "redis_password", "", "Redis password.")
 	//RK 'redis_key'   - [STRING] List key name in redis.
-	downloadCmd.Flags().StringVar(&downloadCfg.Redis.Key, "RK", "HLSGET_DOWNLOADS", "List key name in redis.")
+	flagSet.StringVar(&downloadCfg.Redis.Key, "redis_key", "HLSGET_DOWNLOADS", "List key name in redis.")
 	///// MySQL Configurations =========================================================================================
 	//MH 'mysql_host'  - [STRING] MySQL host.
-	downloadCmd.Flags().StringVar(&downloadCfg.MySQL.Host, "MH", "localhost", "MySQL host.")
+	flagSet.StringVar(&downloadCfg.MySQL.Host, "mysql_host", "localhost", "MySQL host.")
 	//MP 'mysql_port'  - [INTEGER] MySQL port.
-	downloadCmd.Flags().IntVar(&downloadCfg.MySQL.Port, "MP", 3306, "MySQL port.")
+	flagSet.IntVar(&downloadCfg.MySQL.Port, "mysql_port", 3306, "MySQL port.")
 	//MN 'mysql_username' - [STRING] MySQL username.
-	downloadCmd.Flags().StringVar(&downloadCfg.MySQL.Username, "MN", "root", "MySQL username.")
+	flagSet.StringVar(&downloadCfg.MySQL.Username, "mysql_user", "root", "MySQL username.")
 	//MW 'mysql_password' - [STRING] MySQL password.
-	downloadCmd.Flags().StringVar(&downloadCfg.MySQL.Password, "MW", "", "MySQL password.")
+	flagSet.StringVar(&downloadCfg.MySQL.Password, "mysql_password", "", "MySQL password.")
 	//MD 'mysql_db'       - [STRING] MySQL database.
-	downloadCmd.Flags().StringVar(&downloadCfg.MySQL.Db, "MD", "hlsgetdb", "MySQL database.")
+	flagSet.StringVar(&downloadCfg.MySQL.Db, "mysql_db", "hlsgetdb", "MySQL database.")
 	//MT 'mysql_table'    - [STRING] MySQL table.
-	downloadCmd.Flags().StringVar(&downloadCfg.MySQL.Table, "MT", "hlsget_downloads", "MySQL table.")
+	flagSet.StringVar(&downloadCfg.MySQL.Table, "mysql_table", "hlsget_downloads", "MySQL table.")
+
+	downloadCmd.Flags().AddFlagSet(&flagSet)
 }

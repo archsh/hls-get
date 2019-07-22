@@ -20,6 +20,7 @@ require (
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd // indirect
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
+	github.com/spf13/pflag v1.0.3
 	github.com/spf13/viper v1.3.2
 	github.com/xiam/resp v0.0.0-20150723032330-04b037c5d609 // indirect
 	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5 // indirect
