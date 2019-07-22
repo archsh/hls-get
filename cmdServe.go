@@ -104,6 +104,31 @@ func statusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func resumeHandler(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	if id != "" {
+		if v, b := getDownload(id); b {
+			if v.Status < 0 {
+				var req downloadRequest
+				req.id = v.ID
+				req.Name = v.Name
+				req.URL = v.URL
+				downloadChan <- &req
+				v.Status = 0
+				v.Progress = 0
+				v.Message = ""
+				writeResponse(w, 200, v)
+			} else {
+				writeResponse(w, 403, nil)
+			}
+		} else {
+			writeResponse(w, 404, nil)
+		}
+	} else {
+		writeResponse(w, 403, nil)
+	}
+}
+
 func downloadHandler(w http.ResponseWriter, r *http.Request) {
 	log.Debugln("downloadHandler:>")
 	var req downloadRequest
@@ -232,6 +257,7 @@ var serveCmd = &cobra.Command{
 		//	http.Redirect(w, r, "/admin/", 302)
 		//})
 		router.HandleFunc("/download", downloadHandler)
+		router.HandleFunc("/download/{id}", resumeHandler)
 		router.HandleFunc("/status/", statusHandler)
 		router.HandleFunc("/status/{id}", statusHandler)
 		router.PathPrefix("/").Handler(
