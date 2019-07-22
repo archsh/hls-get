@@ -41,7 +41,7 @@ $(GOPATHBIN)/hls-get: version.go go.mod $(GOSRCS) htmldocs/assets_vfsdata.go
 
 run: $(GOPATHBIN)/hls-get
 	@echo "Starting test ..."
-	@$(GOPATHBIN)/hls-get --config example.yaml serve --debug --combine
+	@$(GOPATHBIN)/hls-get --config example.yaml serve --debug --combine --remove
 
 clean:
 	@rm -f $(GOPATHBIN)/hls-get
