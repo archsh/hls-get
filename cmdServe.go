@@ -5,13 +5,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"hls-get/htmldocs"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"sync"
+
+	"hls-get/htmldocs"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/gorilla/handlers"

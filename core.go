@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	log "github.com/Sirupsen/logrus"
-	"github.com/archsh/go.m3u8"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	log "github.com/Sirupsen/logrus"
+	"github.com/archsh/go.m3u8"
 	//"path"
 	//"regexp"
 	"strings"
@@ -28,65 +29,65 @@ type Download struct {
 }
 
 type HLSGetter struct {
-	_client           *http.Client
-	_dl_intf          DL_Interface
-	_path_rewriter    StringRewriter
-	_segment_rewriter StringRewriter
+	client          *http.Client
+	dlInterface     DL_Interface
+	pathRewriter    StringRewriter
+	segmentRewriter StringRewriter
 
-	_output       string
-	_retries      int
-	_timeout      int
-	_skip_exists  bool
-	_skip_on_size bool
-	_user_agent   string
-	_concurrent   int
-	_redirect_url string
-	_total        int64
+	output      string
+	retries     int
+	timeout     int
+	skipExists  bool
+	skipOnSize  bool
+	userAgent   string
+	concurrent  int
+	redirectUrl string
+	total       int64
 }
 
-func NewHLSGetter(dl_intf DL_Interface, output string,
-	path_rewriter StringRewriter, segment_rewriter StringRewriter,
-	retries int, timeout int, skip_exists bool, skip_on_size bool, redirect string, concurrent int, total int64) *HLSGetter {
+func NewHLSGetter(dlInterface DL_Interface, output string,
+	pathRewriter StringRewriter, segmentRewriter StringRewriter,
+	retries int, timeout int, skipExists bool, skipOnSize bool, redirect string, concurrent int, total int64) *HLSGetter {
 	hls := new(HLSGetter)
-	hls._client = &http.Client{Timeout: time.Duration(timeout) * time.Second}
-	hls._dl_intf = dl_intf
-	hls._output = output
-	hls._path_rewriter = path_rewriter
-	hls._segment_rewriter = segment_rewriter
-	hls._redirect_url = redirect
-	hls._retries = retries
-	hls._timeout = timeout
-	hls._skip_exists = skip_exists
-	hls._skip_on_size = skip_on_size
-	hls._concurrent = concurrent
-	hls._user_agent = "hls-get v" + VERSION
-	hls._total = total
+	hls.client = &http.Client{Timeout: time.Duration(timeout) * time.Second}
+	hls.dlInterface = dlInterface
+	hls.output = output
+	hls.pathRewriter = pathRewriter
+	hls.segmentRewriter = segmentRewriter
+	hls.redirectUrl = redirect
+	hls.retries = retries
+	hls.timeout = timeout
+	hls.skipExists = skipExists
+	hls.skipOnSize = skipOnSize
+	hls.concurrent = concurrent
+	hls.userAgent = "hls-get v" + VERSION
+	hls.total = total
 	return hls
 }
 
 func (getter *HLSGetter) SetUA(ua string) {
-	getter._user_agent = ua
+	getter.userAgent = ua
 }
 
 func (getter *HLSGetter) PathRewrite(intput string) string {
-	if getter._path_rewriter != nil {
-		return getter._path_rewriter.RunString(intput, 0)
+	if getter.pathRewriter != nil {
+		return getter.pathRewriter.RunString(intput, 0)
 	}
 	return intput
 }
 
 func (getter *HLSGetter) SegmentRewrite(input string, idx int) string {
-	if getter._segment_rewriter != nil {
-		return getter._segment_rewriter.RunString(input, idx)
+	if getter.segmentRewriter != nil {
+		return getter.segmentRewriter.RunString(input, idx)
 	}
 	return input
 }
 
 func (getter *HLSGetter) Run(loop bool) {
-	if getter._concurrent < 1 {
+	if getter.concurrent < 1 {
 		log.Fatalln("Concurrent can not less than 1!")
 	}
-	if getter._dl_intf == nil {
+	if getter.dlInterface == nil {
 		log.Fatalln("Download List Interface can not be nil!")
 	}
 	var totalDownloaded int64
@@ -95,17 +96,17 @@ func (getter *HLSGetter) Run(loop bool) {
 	totalDownloaded = 0
 	totalFailed = 0
 	for {
-		if getter._total > 0 && totalDownloaded >= getter._total {
-			log.Infoln("Reache total of downloads:", getter._total)
+		if getter.total > 0 && totalDownloaded >= getter.total {
+			log.Infoln("Reached total of downloads:", getter.total)
 			break;
 		}
 		var num int
-		if getter._total > 0 && getter._concurrent > int(getter._total-totalDownloaded) {
-			num = int(getter._total - totalDownloaded)
+		if getter.total > 0 && getter.concurrent > int(getter.total-totalDownloaded) {
+			num = int(getter.total - totalDownloaded)
 		} else {
-			num = getter._concurrent
+			num = getter.concurrent
 		}
-		urls, err := getter._dl_intf.NextLinks(num)
+		urls, err := getter.dlInterface.NextLinks(num)
 		//log.Debugln("length of urls:", len(urls))
 		if nil != err || len(urls) == 0 {
 			log.Errorln("Can not get links!", err)
@@ -121,7 +122,7 @@ func (getter *HLSGetter) Run(loop bool) {
 		for _, l := range urls {
 			log.Debugln(" Downloading ", l, "...")
 			go func(lk string) {
-				url, dest, retCode, retMsg := getter.Download(lk, getter._output, "", func(total, current, avails int, uri string) {
+				url, dest, retCode, retMsg := getter.Download(lk, getter.output, "", func(total, current, avails int, uri string) {
 					log.Infof("Download: %d/%d/%d %s ...\b", current, avails, total, uri)
 				})
 				if retCode != 0 {
@@ -130,12 +131,12 @@ func (getter *HLSGetter) Run(loop bool) {
 					totalSuccess += 1
 				}
 				totalDownloaded += 1
-				getter._dl_intf.SubmitResult(url, dest, retCode, retMsg)
+				getter.dlInterface.SubmitResult(url, dest, retCode, retMsg)
 				wg.Done()
 			}(l)
 		}
 		wg.Wait()
-		if len(urls) < getter._concurrent || len(urls) < 1 {
+		if len(urls) < getter.concurrent || len(urls) < 1 {
 			log.Infoln("End of download list.")
 			break
 		}
@@ -147,9 +148,9 @@ func (getter *HLSGetter) Run(loop bool) {
 }
 
 func (getter *HLSGetter) doRequest(req *http.Request) (*http.Response, error) {
-	req.Header.Set("User-Agent", getter._user_agent)
+	req.Header.Set("User-Agent", getter.userAgent)
 	req.Header.Add("Accept-Encoding", "identity")
-	resp, err := getter._client.Do(req)
+	resp, err := getter.client.Do(req)
 	return resp, err
 }
 
@@ -218,7 +219,7 @@ func (getter *HLSGetter) GetSegment(url string, filename string, skip_exists boo
 		}
 		return filename, nil
 	}
-	return "", errors.New("Failed to download segment!")
+	return "", errors.New("failed to download segment")
 }
 
 func (getter *HLSGetter) GetPlaylist(urlStr string, outDir string, filename string, retries int, skip_exists bool) (segments []*Download, dest string, ret_code int, ret_msg string) {
@@ -226,8 +227,8 @@ func (getter *HLSGetter) GetPlaylist(urlStr string, outDir string, filename stri
 		retries = 1
 	}
 	for i := 0; i < retries; i++ {
-		if getter._redirect_url != "" {
-			urlStr = fmt.Sprintf(getter._redirect_url, urlStr)
+		if getter.redirectUrl != "" {
+			urlStr = fmt.Sprintf(getter.redirectUrl, urlStr)
 		}
 		log.Debugln("GetPlaylist:> Get ", urlStr)
 		req, err := http.NewRequest("GET", urlStr, nil)
@@ -341,7 +342,7 @@ func (getter *HLSGetter) Download(urlStr string, outDir string, filename string,
 	failures := 0
 	var total, current, avails int
 	log.Debugln("Download> ", urlStr, outDir)
-	segments, dest, retCode, retMsg = getter.GetPlaylist(urlStr, outDir, filename, getter._retries, getter._skip_exists)
+	segments, dest, retCode, retMsg = getter.GetPlaylist(urlStr, outDir, filename, getter.retries, getter.skipExists)
 	total = len(segments)
 	if total < 1 || retCode != 0 {
 		//callback(urlStr, dest, retCode, retMsg)
@@ -349,10 +350,10 @@ func (getter *HLSGetter) Download(urlStr string, outDir string, filename string,
 		return urlStr, dest, retCode, retMsg
 	}
 
-	for i := 0; i < total; i += getter._concurrent {
+	for i := 0; i < total; i += getter.concurrent {
 		var segs []*Download
-		if i+getter._concurrent < total {
-			segs = segments[i : i+getter._concurrent]
+		if i+getter.concurrent < total {
+			segs = segments[i : i+getter.concurrent]
 		} else {
 			segs = segments[i:]
 		}
@@ -361,7 +362,7 @@ func (getter *HLSGetter) Download(urlStr string, outDir string, filename string,
 		for j, seg := range segs {
 			//log.Debugln(">>> Seg:", seg.URI)
 			go func(ps *Download) {
-				s, e := getter.GetSegment(ps.URI, ps.Filename, getter._skip_exists, getter._skip_on_size, getter._retries)
+				s, e := getter.GetSegment(ps.URI, ps.Filename, getter.skipExists, getter.skipOnSize, getter.retries)
 				if e != nil {
 					failures += 1
 					log.Errorln("Download Segment failed:", ps.URI, e)
